@@ -6,12 +6,12 @@ import { mettreAJourStatut } from './actions'
 
 export type TacheChauffeur = {
   id: string
-  client: string
-  adresse: string
+  adresse_livraison: string
   type: string
-  conteneur: string
   statut: string
-  sequence: number
+  ordre_sequence: number
+  clients: { nom: string } | null
+  conteneurs: { numero_serie: string; taille: string } | null
 }
 
 const TERMINES = new Set(['livre', 'ramasse', 'obstacle'])
@@ -264,7 +264,7 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-bold rounded-full px-2.5 py-1 ${terminee ? 'bg-green-200 text-green-800' : bloquee ? 'bg-gray-200 text-gray-600' : 'bg-white/20 text-white'}`}>
-                    #{tache.sequence}
+                    #{tache.ordre_sequence}
                   </span>
                   <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${
                     tache.type === 'livraison'
@@ -290,13 +290,13 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
             {/* Task body */}
             <div className="px-5 py-4">
               <p className={`text-xl font-bold leading-tight mb-1 ${terminee ? 'text-green-800' : bloquee ? 'text-gray-500' : 'text-[#1a2e4a]'}`}>
-                {tache.client}
+                {tache.clients?.nom ?? '—'}
               </p>
               <p className={`text-sm mb-1 ${terminee ? 'text-green-700' : bloquee ? 'text-gray-400' : 'text-gray-600'}`}>
-                {tache.adresse}
+                {tache.adresse_livraison}
               </p>
               <p className={`text-xs font-medium ${terminee ? 'text-green-600' : bloquee ? 'text-gray-400' : 'text-gray-400'}`}>
-                Conteneur : {tache.conteneur}
+                Conteneur : {tache.conteneurs ? `${tache.conteneurs.numero_serie} — ${tache.conteneurs.taille}` : '—'}
               </p>
 
               {/* Blocking message */}
@@ -304,7 +304,7 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
                 <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
                   <IconLock />
                   <p className="text-xs font-semibold text-amber-700">
-                    Complétez la tâche #{precedente!.sequence} d'abord
+                    Complétez la tâche #{precedente!.ordre_sequence} d'abord
                   </p>
                 </div>
               )}

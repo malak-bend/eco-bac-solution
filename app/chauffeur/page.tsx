@@ -17,10 +17,10 @@ export default async function ChauffeurPage() {
   // La colonne "chauffeur" stocke l'UUID de l'utilisateur connecté
   const { data: taches, error } = await supabase
     .from('taches')
-    .select('id, client, adresse, type, conteneur, statut, sequence')
-    .eq('chauffeur', user.id)
+    .select('id, adresse_livraison, type, statut, ordre_sequence, clients(nom), conteneurs(numero_serie, taille)')
+    .eq('chauffeur_id', user.id)
     .eq('date_planifiee', today)
-    .order('sequence', { ascending: true })
+    .order('ordre_sequence', { ascending: true })
 
   const email = user.email ?? ''
   const role = user.app_metadata?.role as string | undefined

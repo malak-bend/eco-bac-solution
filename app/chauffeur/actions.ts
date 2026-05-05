@@ -38,7 +38,7 @@ export async function mettreAJourStatut(
 
   // Save obstacle note
   const note = formData.get('note') as string | null
-  if (note?.trim()) updates.note_obstacle = note.trim()
+  if (note?.trim()) updates.motif_obstacle = note.trim()
 
   const { error } = await supabase
     .from('taches')
