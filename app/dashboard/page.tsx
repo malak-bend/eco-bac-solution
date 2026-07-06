@@ -158,6 +158,12 @@ export default async function DashboardPage() {
               >
                 Gérer les clients
               </Link>
+              <Link
+                href="/dashboard/conteneurs"
+                className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition"
+              >
+                Gérer les conteneurs
+              </Link>
               <button
                 disabled
                 className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition disabled:opacity-50 disabled:cursor-not-allowed"
