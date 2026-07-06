@@ -1,13 +1,15 @@
 'use client'
 
-import { useEffect, useActionState } from 'react'
+import { useState, useEffect, useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { creerTache, type TacheState } from './actions'
-import type { Chauffeur, Conteneur } from './TachesPageClient'
+import type { Chauffeur, Conteneur, Client } from './TachesPageClient'
 
 const TYPES = [
   { value: 'livraison', label: 'Livraison' },
   { value: 'ramassage', label: 'Ramassage' },
+  { value: 'echange_conteneur', label: 'Échange de conteneur' },
+  { value: 'service_express', label: 'Service express' },
 ]
 
 const STATUTS = [
@@ -26,22 +28,26 @@ interface Props {
   onClose: () => void
   chauffeurs: Chauffeur[]
   conteneurs: Conteneur[]
+  clients: Client[]
 }
 
 function ModalForm({
   onClose,
   chauffeurs,
   conteneurs,
+  clients,
 }: {
   onClose: () => void
   chauffeurs: Chauffeur[]
   conteneurs: Conteneur[]
+  clients: Client[]
 }) {
   const router = useRouter()
   const [state, formAction, pending] = useActionState<TacheState, FormData>(
     creerTache,
     undefined
   )
+  const [modeClient, setModeClient] = useState<'existant' | 'nouveau'>('existant')
 
   useEffect(() => {
     if (state?.success) {
@@ -75,8 +81,50 @@ function ModalForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="client" className={labelClass}>Client *</label>
-          <input id="client" name="client" type="text" required className={inputClass} placeholder="Nom du client" />
+          <div className="flex items-center justify-between mb-1">
+            <span className={labelClass.replace(' mb-1', '')}>Client *</span>
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setModeClient('existant')}
+                className={`px-2.5 py-1 transition ${
+                  modeClient === 'existant'
+                    ? 'bg-[#1a2e4a] text-white'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Existant
+              </button>
+              <button
+                type="button"
+                onClick={() => setModeClient('nouveau')}
+                className={`px-2.5 py-1 transition border-l border-gray-200 ${
+                  modeClient === 'nouveau'
+                    ? 'bg-[#1a2e4a] text-white'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Nouveau
+              </button>
+            </div>
+          </div>
+          {modeClient === 'existant' ? (
+            <select id="client_id" name="client_id" required className={inputClass}>
+              <option value="">— Sélectionner —</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.nom}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              id="nom_client"
+              name="nom_client"
+              type="text"
+              required
+              className={inputClass}
+              placeholder="Nom du nouveau client"
+            />
+          )}
         </div>
         <div>
           <label htmlFor="conteneur" className={labelClass}>Conteneur *</label>
@@ -148,7 +196,7 @@ function ModalForm({
   )
 }
 
-export default function NouvelleTacheModal({ open, onClose, chauffeurs, conteneurs }: Props) {
+export default function NouvelleTacheModal({ open, onClose, chauffeurs, conteneurs, clients }: Props) {
   if (!open) return null
 
   return (
@@ -170,7 +218,7 @@ export default function NouvelleTacheModal({ open, onClose, chauffeurs, conteneu
           </button>
         </div>
         <div className="px-6 py-5">
-          <ModalForm onClose={onClose} chauffeurs={chauffeurs} conteneurs={conteneurs} />
+          <ModalForm onClose={onClose} chauffeurs={chauffeurs} conteneurs={conteneurs} clients={clients} />
         </div>
       </div>
     </div>

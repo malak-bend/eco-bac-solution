@@ -14,6 +14,8 @@ const TYPES = [
   { value: '', label: 'Tous les types' },
   { value: 'livraison', label: 'Livraison' },
   { value: 'ramassage', label: 'Ramassage' },
+  { value: 'echange_conteneur', label: 'Échange de conteneur' },
+  { value: 'service_express', label: 'Service express' },
 ]
 
 interface Props {

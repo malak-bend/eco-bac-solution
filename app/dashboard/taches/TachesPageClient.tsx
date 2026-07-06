@@ -46,15 +46,21 @@ export type Conteneur = {
   taille: string
 }
 
+export type Client = {
+  id: string
+  nom: string
+}
+
 interface Props {
   taches: Tache[]
   currentStatut: string
   currentType: string
   chauffeurs: Chauffeur[]
   conteneurs: Conteneur[]
+  clients: Client[]
 }
 
-export default function TachesPageClient({ taches, currentStatut, currentType, chauffeurs, conteneurs }: Props) {
+export default function TachesPageClient({ taches, currentStatut, currentType, chauffeurs, conteneurs, clients }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const formatDate = (iso: string) => {
@@ -160,6 +166,7 @@ export default function TachesPageClient({ taches, currentStatut, currentType, c
         onClose={() => setModalOpen(false)}
         chauffeurs={chauffeurs}
         conteneurs={conteneurs}
+        clients={clients}
       />
     </>
   )

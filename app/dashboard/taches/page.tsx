@@ -31,6 +31,7 @@ export default async function TachesPage({
     { data: taches, error },
     { data: chauffeurs },
     { data: conteneurs },
+    { data: clients },
   ] = await Promise.all([
     query,
     supabase
@@ -42,6 +43,10 @@ export default async function TachesPage({
       .from('conteneurs')
       .select('id, numero_serie, taille')
       .order('numero_serie'),
+    supabase
+      .from('clients')
+      .select('id, nom')
+      .order('nom'),
   ])
 
   const email = user.email ?? ''
@@ -63,6 +68,7 @@ export default async function TachesPage({
             currentType={type ?? ''}
             chauffeurs={chauffeurs ?? []}
             conteneurs={conteneurs ?? []}
+            clients={clients ?? []}
           />
         )}
       </main>

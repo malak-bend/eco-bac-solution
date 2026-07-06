@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase'
 import { logout } from '@/app/actions'
@@ -145,19 +146,24 @@ export default async function DashboardPage() {
               <h2 className="font-semibold text-[#1a2e4a]">Actions rapides</h2>
             </div>
             <div className="p-4 flex flex-col gap-2">
-              {[
-                'Planifier une collecte',
-                'Ajouter un client',
-                'Générer un rapport',
-              ].map((action) => (
-                <button
-                  key={action}
-                  disabled
-                  className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {action}
-                </button>
-              ))}
+              <Link
+                href="/dashboard/taches"
+                className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition"
+              >
+                Planifier une tâche
+              </Link>
+              <Link
+                href="/dashboard/clients"
+                className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition"
+              >
+                Gérer les clients
+              </Link>
+              <button
+                disabled
+                className="w-full text-left rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 hover:border-[#4CAF50] hover:text-[#4CAF50] transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Générer un rapport
+              </button>
             </div>
           </div>
         </div>

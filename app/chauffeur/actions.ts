@@ -15,30 +15,38 @@ export async function mettreAJourStatut(
 
   const updates: Record<string, unknown> = { statut: nouveauStatut }
 
-  // Upload photo if provided
+  // Upload photo → sauvegarde URL dans la table `photos`
   const photo = formData.get('photo') as File | null
   if (photo && photo.size > 0) {
     const ext = photo.name.split('.').pop() ?? 'jpg'
     const path = `${tacheId}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage
-      .from('taches-photos') // bucket à créer dans Supabase Storage
+      .from('taches-photos')
       .upload(path, photo, { contentType: photo.type })
 
     if (uploadError) {
-      return { error: `Erreur photo : ${uploadError.message}` }
+      return { error: `Erreur upload photo : ${uploadError.message}` }
     }
 
     const { data: { publicUrl } } = supabase.storage
       .from('taches-photos')
       .getPublicUrl(path)
 
-    updates.photo_url = publicUrl
+    const { error: photoError } = await supabase
+      .from('photos')
+      .insert({ tache_id: tacheId, url: publicUrl, statut_associe: nouveauStatut })
+
+    if (photoError) {
+      return { error: `Erreur sauvegarde photo : ${photoError.message}` }
+    }
   }
 
-  // Save obstacle note
+  // Motif (menu déroulant) et note (texte libre) pour obstacle
+  const motif = formData.get('motif') as string | null
   const note = formData.get('note') as string | null
-  if (note?.trim()) updates.motif_obstacle = note.trim()
+  if (motif?.trim()) updates.motif_obstacle = motif.trim()
+  if (note?.trim()) updates.note_obstacle = note.trim()
 
   const { error } = await supabase
     .from('taches')

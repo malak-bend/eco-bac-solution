@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { mettreAJourStatut } from './actions'
 
@@ -25,6 +25,16 @@ const STATUT_LABEL: Record<string, string> = {
   ramasse: 'Ramassé ✓',
   obstacle: 'Obstacle ⚠',
 }
+
+const MOTIFS_OBSTACLE = [
+  'Accès bloqué',
+  'Client absent',
+  'Adresse introuvable',
+  'Conteneur non disponible / endommagé',
+  'Météo / conditions dangereuses',
+  'Véhicule en panne',
+  'Autre',
+]
 
 type ActionPendante = {
   tacheId: string
@@ -69,19 +79,36 @@ function Spinner() {
 interface ActionPanelProps {
   action: ActionPendante
   isPending: boolean
-  onConfirm: (photo: File | null, note: string) => void
+  onConfirm: (photo: File | null, note: string, motif: string) => void
   onCancel: () => void
 }
 
 function ActionPanel({ action, isPending, onConfirm, onCancel }: ActionPanelProps) {
   const [photo, setPhoto] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  const [motif, setMotif] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null
+    setPhoto(file)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(file ? URL.createObjectURL(file) : null)
+  }
 
   const handleConfirm = () => {
     if (action.requiresPhoto && !photo) {
       setLocalError('Une photo est obligatoire.')
+      return
+    }
+    if (action.statut === 'obstacle' && !motif) {
+      setLocalError('Veuillez sélectionner un motif.')
       return
     }
     if (action.requiresNote && !note.trim()) {
@@ -89,7 +116,7 @@ function ActionPanel({ action, isPending, onConfirm, onCancel }: ActionPanelProp
       return
     }
     setLocalError(null)
-    onConfirm(photo, note)
+    onConfirm(photo, note, motif)
   }
 
   const statutLabel = STATUT_LABEL[action.statut] ?? action.statut
@@ -100,37 +127,60 @@ function ActionPanel({ action, isPending, onConfirm, onCancel }: ActionPanelProp
         Confirmer : <span className="text-[#1a2e4a]">{statutLabel}</span>
       </p>
 
+      {/* Photo obligatoire */}
       {action.requiresPhoto && (
-        <div>
+        <div className="space-y-2">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             className={`w-full flex items-center justify-center gap-2 rounded-xl border-2 py-4 text-sm font-semibold transition ${
               photo
                 ? 'border-green-400 bg-green-50 text-green-700'
-                : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                : 'border-red-300 bg-white text-gray-600 hover:border-red-400'
             }`}
           >
             <IconCamera />
-            {photo ? `Photo sélectionnée : ${photo.name}` : 'Prendre / choisir une photo'}
+            {photo ? photo.name : 'Prendre / choisir une photo *'}
           </button>
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt="Aperçu de la photo"
+              className="w-full rounded-xl object-cover max-h-48 border border-green-200"
+            />
+          )}
           <input
             ref={fileRef}
             type="file"
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={(e) => setPhoto(e.target.files?.[0] ?? null)}
+            onChange={handlePhotoChange}
           />
         </div>
       )}
 
+      {/* Menu déroulant motif (obstacle uniquement) */}
+      {action.statut === 'obstacle' && (
+        <select
+          value={motif}
+          onChange={(e) => setMotif(e.target.value)}
+          className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm bg-white focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
+        >
+          <option value="">— Sélectionner un motif * —</option>
+          {MOTIFS_OBSTACLE.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+      )}
+
+      {/* Note texte libre obligatoire (obstacle) */}
       {action.requiresNote && (
         <textarea
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Décrivez l'obstacle ou la raison d'impossibilité…"
+          placeholder="Décrivez l'obstacle ou la raison d'impossibilité… *"
           className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm resize-none focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 transition"
         />
       )}
@@ -196,12 +246,13 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
   const [actionPendante, setActionPendante] = useState<ActionPendante | null>(null)
   const [erreurGlobale, setErreurGlobale] = useState<string | null>(null)
 
-  const executer = (tacheId: string, statut: string, photo: File | null, note: string) => {
+  const executer = (tacheId: string, statut: string, photo: File | null, note: string, motif: string) => {
     setErreurGlobale(null)
     startTransition(async () => {
       const formData = new FormData()
       if (photo) formData.set('photo', photo)
       if (note.trim()) formData.set('note', note.trim())
+      if (motif) formData.set('motif', motif)
       const result = await mettreAJourStatut(tacheId, statut, undefined, formData)
       if (result?.error) {
         setErreurGlobale(result.error)
@@ -216,7 +267,7 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
     if (requiresPhoto || requiresNote) {
       setActionPendante({ tacheId, statut, requiresPhoto, requiresNote })
     } else {
-      executer(tacheId, statut, null, '')
+      executer(tacheId, statut, null, '', '')
     }
   }
 
@@ -353,12 +404,12 @@ export default function ChauffeurInterface({ taches }: { taches: TacheChauffeur[
                     onClick={() => demanderAction(tache.id, 'obstacle', true, true)}
                   />
 
-                  {/* Inline confirmation panel */}
+                  {/* Panneau de confirmation inline */}
                   {showPanel && actionPendante && (
                     <ActionPanel
                       action={actionPendante}
                       isPending={isPending}
-                      onConfirm={(photo, note) => executer(tache.id, actionPendante.statut, photo, note)}
+                      onConfirm={(photo, note, motif) => executer(tache.id, actionPendante.statut, photo, note, motif)}
                       onCancel={() => setActionPendante(null)}
                     />
                   )}
